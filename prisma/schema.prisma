@@ -1,0 +1,133 @@
+// This is your Prisma schema file.
+// It defines your database models and the relationships between them.
+
+// Specifies the Prisma Client generator.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Defines the database connection.
+// The URL is loaded from the .env.local file for security.
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Model for Users
+// Stores user credentials, personal info, and role.
+model User {
+  id                 Int                  @id @default(autoincrement())
+  username           String               @unique
+  password           String               @db.VarChar(255) // Hashed password
+  fullName           String
+  role               Role                 @default(USER)
+  createdAt          DateTime             @default(now())
+
+  // --- Relations ---
+  lessonsCreated     Lesson[]             @relation("CreatedBy")
+  lessonAssignments  LessonAssignment[]
+  dutyRotaSenior     DutyRota[]           @relation("DutySenior")
+  dutyRotaJunior     DutyRota[]           @relation("DutyJunior")
+
+  // NextAuth.js specific fields for the adapter
+  accounts Account[]
+  sessions Session[]
+}
+
+// Model for Lessons
+// Stores details for each scheduled lesson or activity.
+model Lesson {
+  id                 Int                  @id @default(autoincrement())
+  title              String
+  description        String?              @db.Text
+  lessonDate         DateTime             @db.Date
+
+  // --- Relations ---
+  createdBy          User                 @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById        Int
+  assignments        LessonAssignment[]
+  resources          LessonResource[]
+}
+
+// Join table to link Users (NCOs) to Lessons.
+model LessonAssignment {
+  id        Int      @id @default(autoincrement())
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId  Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+
+  // Ensures a user can only be assigned to a lesson once.
+  @@unique([lessonId, userId])
+}
+
+// Model for Lesson Resources
+// Stores information about uploaded files for each lesson.
+model LessonResource {
+  id         Int      @id @default(autoincrement())
+  fileName   String
+  filePath   String   // Path to the file on the server
+  uploadedAt DateTime @default(now())
+
+  // --- Relations ---
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId   Int
+}
+
+// Model for the Duty Rota
+// Assigns Duty Senior and Duty Junior for a specific date.
+model DutyRota {
+  id             Int      @id @default(autoincrement())
+  dutyDate       DateTime @unique @db.Date
+
+  // --- Relations ---
+  dutySenior     User     @relation("DutySenior", fields: [dutySeniorId], references: [id])
+  dutySeniorId   Int
+  dutyJunior     User     @relation("DutyJunior", fields: [dutyJuniorId], references: [id])
+  dutyJuniorId   Int
+}
+
+// Enum for User Roles
+enum Role {
+  USER
+  ADMIN
+}
+
+
+// --- NextAuth.js Models ---
+// These are required by the @next-auth/prisma-adapter
+
+model Account {
+  id                 Int       @id @default(autoincrement())
+  userId             Int
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String?   @db.Text
+  access_token       String?   @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?   @db.Text
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           Int      @id @default(autoincrement())
+  sessionToken String   @unique
+  userId       Int
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
