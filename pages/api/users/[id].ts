@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
-  const userIdToModify = req.query.id as string;
+  const userIdToModify = parseInt(req.query.id as string);
 
   // Authenticate and Authorize: Ensure user is an admin
   if (!session || session.user.role !== Role.ADMIN) {
@@ -18,17 +18,38 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   // --- Handle DELETE request to remove a user ---
   if (req.method === 'DELETE') {
     // Prevent a user from deleting their own account
-    if (session.user.id === userIdToModify) {
+    if (session.user.id === userIdToModify.toString()) {
         return res.status(403).json({ message: "You cannot delete your own account." });
     }
     try {
-        await prisma.user.delete({
-            where: { id: parseInt(userIdToModify) },
+        // Use a transaction to perform multiple database operations safely.
+        // If any operation fails, all of them will be rolled back.
+        await prisma.$transaction(async (tx) => {
+            // 1. Delete all lesson assignments for this user.
+            await tx.lessonAssignment.deleteMany({
+                where: { userId: userIdToModify },
+            });
+
+            // 2. Delete all duty rota entries where this user is either senior or junior.
+            await tx.dutyRota.deleteMany({
+                where: {
+                    OR: [
+                        { dutySeniorId: userIdToModify },
+                        { dutyJuniorId: userIdToModify },
+                    ],
+                },
+            });
+
+            // 3. Now it's safe to delete the user.
+            await tx.user.delete({
+                where: { id: userIdToModify },
+            });
         });
-        return res.status(200).json({ message: 'User deleted successfully.' });
+
+        return res.status(200).json({ message: 'User and all associated assignments have been deleted successfully.' });
     } catch (error) {
         console.error('Failed to delete user:', error);
-        return res.status(500).json({ message: 'Something went wrong.' });
+        return res.status(500).json({ message: 'Something went wrong during the deletion process.' });
     }
   }
   // --- Handle PUT request to update user details (fullName, role) ---
@@ -41,7 +62,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
     try {
       const updatedUser = await prisma.user.update({
-        where: { id: parseInt(userIdToModify) },
+        where: { id: userIdToModify },
         data: { fullName, role },
       });
       const { password: _, ...safeUser } = updatedUser;
@@ -62,7 +83,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     try {
       const hashedPassword = await bcrypt.hash(password, 12);
       await prisma.user.update({
-        where: { id: parseInt(userIdToModify) },
+        where: { id: userIdToModify },
         data: { password: hashedPassword },
       });
       return res.status(200).json({ message: 'Password updated successfully.' });
