@@ -23,6 +23,9 @@
   "prisma": {
     "seed": "ts-node --project prisma/tsconfig.json prisma/seed.ts"
   },
+  "overrides": {
+    "date-fns": "^2.28.0"
+  },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.10",
     "@types/bcrypt": "^5.0.2",
