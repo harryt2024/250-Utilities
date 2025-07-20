@@ -20,6 +20,7 @@
     "next": "latest",
     "next-auth": "^4.24.11",
     "react": "latest",
+    "react-big-calendar": "^1.19.4",
     "react-dom": "latest",
     "swr": "^2.3.4"
   },
