@@ -18,7 +18,8 @@ jobs:
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        # Use the password secret instead of the key
+        password: ${{ secrets.SSH_PASSWORD }}
         script: |
           # Navigate to the project directory
           cd ${{ secrets.PROJECT_PATH }}
