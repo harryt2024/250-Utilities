@@ -2,7 +2,8 @@ import { getSession } from 'next-auth/react';
 import type { GetServerSideProps } from 'next';
 import { Role, Lesson } from '@prisma/client';
 import useSWR, { useSWRConfig } from 'swr';
-import FullCalendar, { EventClickArg } from '@fullcalendar/react';
+import FullCalendar from '@fullcalendar/react';
+import type { EventClickArg } from '@fullcalendar/core'; // Correct import for EventClickArg
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction'; // Correct import for DateClickArg
