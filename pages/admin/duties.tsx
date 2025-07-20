@@ -4,10 +4,10 @@ import { Role, DutyRota, User } from '@prisma/client';
 import useSWR, { useSWRConfig } from 'swr';
 import { useState, FormEvent, useEffect, useMemo } from 'react';
 import { PrismaClient } from '@prisma/client';
-import FullCalendar, { DateClickArg } from '@fullcalendar/react';
+import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
-import interactionPlugin from '@fullcalendar/interaction';
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
 import AdminLayout from '../../components/AdminLayout';
 
 const prisma = new PrismaClient();
