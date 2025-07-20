@@ -30,12 +30,14 @@ function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, 
     const [dutySeniorId, setDutySeniorId] = useState('');
     const [dutyJuniorId, setDutyJuniorId] = useState('');
     const [formError, setFormError] = useState<string | null>(null);
+    const [isConfirmingDelete, setIsConfirmingDelete] = useState(false); // New state for delete confirmation
 
     useEffect(() => {
         if (isOpen) {
             setDutySeniorId(existingDuty?.dutySeniorId.toString() || '');
             setDutyJuniorId(existingDuty?.dutyJuniorId.toString() || '');
             setFormError(null);
+            setIsConfirmingDelete(false); // Reset confirmation state when modal opens
         }
     }, [isOpen, existingDuty]);
 
@@ -59,8 +61,6 @@ function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, 
     };
 
     const handleDelete = async () => {
-        if (!window.confirm('Are you sure you want to delete this duty assignment?')) return;
-
         const response = await fetch('/api/duties', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
@@ -73,6 +73,7 @@ function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, 
         } else {
             const data = await response.json();
             setFormError(data.message || 'Failed to delete assignment.');
+            setIsConfirmingDelete(false); // Hide confirmation on error
         }
     };
 
@@ -91,11 +92,21 @@ function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, 
                         <option value="">Select Duty Junior</option>
                         {allUsers.map(user => <option key={user.id} value={user.id}>{user.fullName}</option>)}
                     </select>
-                    <div className="flex justify-between pt-2">
-                        {existingDuty && (
-                             <button type="button" onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Delete</button>
+                    <div className="flex items-center justify-between pt-2">
+                        {/* Conditional rendering for delete confirmation */}
+                        {existingDuty && !isConfirmingDelete && (
+                             <button type="button" onClick={() => setIsConfirmingDelete(true)} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Delete</button>
                         )}
-                        <div className="flex-grow"></div>
+                        {existingDuty && isConfirmingDelete && (
+                            <div className="flex space-x-2">
+                                <button type="button" onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-800">Confirm</button>
+                                <button type="button" onClick={() => setIsConfirmingDelete(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+                            </div>
+                        )}
+                        
+                        {/* Spacer to keep Save/Cancel buttons on the right */}
+                        {!existingDuty && <div />}
+
                         <div className="flex space-x-4">
                             <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                             <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-portal-blue rounded-md hover:bg-portal-blue-light">Save</button>
@@ -126,7 +137,6 @@ export default function DutyRotaPage({ allUsers }: InferGetServerSidePropsType<t
     };
 
     const handleEventClick = (clickInfo: EventClickArg) => {
-        // FullCalendar's event start time can have timezone offsets, so normalize to a simple date string
         const clickedDate = new Date(clickInfo.event.startStr);
         setSelectedDate(clickedDate);
         setIsModalOpen(true);
