@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { ReactNode } from 'react';
-import { LayoutDashboard, BookCheck, LogOut, Calendar, ClipboardCheck } from 'lucide-react';
+import { LayoutDashboard, BookCheck, LogOut, Calendar, ClipboardCheck, Shirt } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 
 interface UserLayoutProps {
@@ -9,11 +9,13 @@ interface UserLayoutProps {
   pageTitle: string;
 }
 
+// Add the new "Uniform Store" link to this array
 const navLinks = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Full Rota', href: '/rota', icon: Calendar },
   { name: 'My Assigned Lessons', href: '/my-lessons', icon: BookCheck },
   { name: 'My Duties', href: '/my-duties', icon: ClipboardCheck },
+  { name: 'Uniform Store', href: '/uniform', icon: Shirt },
 ];
 
 export default function UserLayout({ children, pageTitle }: UserLayoutProps) {
@@ -22,7 +24,7 @@ export default function UserLayout({ children, pageTitle }: UserLayoutProps) {
 
   return (
     <div className="flex h-screen bg-portal-bg font-sans">
-      <aside className="w-64 flex-shrink-0 bg-portal-dark text-white flex flex-col">
+      <aside className="w-64 flex-shrink-0 bg-portal-dark text-white flex flex-col print-layout-hidden">
         <div className="h-16 flex items-center justify-center text-2xl font-bold border-b border-portal-dark-light">
           <Link href="/">RAFAC Rota</Link>
         </div>
@@ -60,7 +62,7 @@ export default function UserLayout({ children, pageTitle }: UserLayoutProps) {
       </aside>
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6 border-b">
+        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-6 border-b print-layout-hidden">
            <h1 className="text-xl font-semibold text-gray-700">{pageTitle}</h1>
            {session?.user && (
              <div className="text-sm text-gray-600">

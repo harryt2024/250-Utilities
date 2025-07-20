@@ -9,3 +9,18 @@
 @tailwind utilities;
 
 /* You can also add your own global custom styles here if needed */
+@media print {
+    body {
+        background-color: white !important;
+    }
+    .print-layout-hidden {
+        display: none !important;
+    }
+    .printable-area {
+        box-shadow: none !important;
+        border: none !important;
+    }
+    @page {
+        size: landscape;
+    }
+}

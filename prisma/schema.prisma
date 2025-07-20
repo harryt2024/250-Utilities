@@ -28,6 +28,7 @@ model User {
   lessonAssignments  LessonAssignment[]
   dutyRotaSenior     DutyRota[]           @relation("DutySenior")
   dutyRotaJunior     DutyRota[]           @relation("DutyJunior")
+  uniformItemsAdded UniformItem[]
 
   // NextAuth.js specific fields for the adapter
   accounts Account[]
@@ -60,6 +61,46 @@ model LessonAssignment {
   // Ensures a user can only be assigned to a lesson once.
   @@unique([lessonId, userId])
 }
+
+model UniformItem {
+  id          Int              @id @default(autoincrement())
+  type        UniformType
+  size        String
+  condition   UniformCondition
+  addedAt     DateTime         @default(now())
+  addedBy     User             @relation(fields: [addedById], references: [id])
+  addedById   Int
+
+  // Add this new relation to your existing User model
+  // User model:
+  // uniformItemsAdded UniformItem[]
+}
+
+enum UniformType {
+  MENS_TROUSERS
+  MENS_WEDGEWOOD_SHIRT
+  MENS_WORKING_BLUE_SHIRT
+  BRASSARD
+  BLUE_GREY_BELT
+  BLACK_SOCKS
+  BLACK_LEATHER_GLOVES
+  WOMENS_TROUSERS
+  WOMENS_SLACKS
+  WOMENS_WORKING_BLUE_SHIRT
+  WOMENS_SKIRT
+  WOMENS_WEDGEWOOD_SHIRT
+  FOUL_WEATHER_JACKET
+  BERET_AND_BADGE
+  MISC
+}
+
+enum UniformCondition {
+  NEW
+  GOOD
+  SERVICEABLE
+  POOR
+}
+
 
 // Model for Lesson Resources
 // Stores information about uploaded files for each lesson.

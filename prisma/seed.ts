@@ -1,5 +1,5 @@
 import { PrismaClient, Role } from '@prisma/client';
-import bcrypt from 'bcryptjs'; // <-- Use bcryptjs instead of bcrypt
+import bcrypt from 'bcryptjs'; // Use bcryptjs for reliability
 
 // Initialize Prisma Client
 const prisma = new PrismaClient();
@@ -9,8 +9,7 @@ async function main() {
 
   // --- CREATE YOUR ADMIN USER ---
   // You can change the password here to a secure password of your choice.
-  const password = 'Alpha3302!'; 
-  // Use bcryptjs for hashing
+  const password = 'adminpassword'; 
   const hashedPassword = await bcrypt.hash(password, 12);
 
   const adminUser = await prisma.user.upsert({
