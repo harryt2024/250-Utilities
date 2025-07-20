@@ -4,9 +4,8 @@ import { Role, Lesson } from '@prisma/client';
 import useSWR, { useSWRConfig } from 'swr';
 import FullCalendar, { EventClickArg } from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
-import interactionPlugin from '@fullcalendar/interaction'; // for dateClick
+import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction'; // Correct import for DateClickArg
 import { useRouter } from 'next/router';
 import { useState, FormEvent, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
@@ -89,7 +88,7 @@ export default function LessonManagementPage() {
         router.push(`/admin/lessons/${clickInfo.event.id}`);
     };
 
-    const handleDateClick = (arg: { dateStr: string }) => {
+    const handleDateClick = (arg: DateClickArg) => {
         setSelectedDate(arg.dateStr);
         setIsModalOpen(true);
     };
