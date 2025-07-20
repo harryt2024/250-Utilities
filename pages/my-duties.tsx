@@ -3,11 +3,13 @@ import type { GetServerSideProps } from 'next';
 import useSWR from 'swr';
 import type { DutyRota } from '@prisma/client';
 import UserLayout from '../components/UserLayout';
-import { format } from 'date-fns';
+import FullCalendar from '@fullcalendar/react';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import listPlugin from '@fullcalendar/list';
+import { useMemo } from 'react';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-// Define the shape of the duty data we expect from our API
 type MyDutyData = (DutyRota & {
     dutySenior: { fullName: string };
     dutyJunior: { fullName: string };
@@ -17,41 +19,33 @@ type MyDutyData = (DutyRota & {
 export default function MyDutiesPage() {
     const { data: duties, error, isLoading } = useSWR<MyDutyData[]>('/api/rota/my-duties', fetcher);
 
+    const events = useMemo(() => (duties ? duties.map(duty => ({
+        title: `Your Role: ${duty.userDuty}\nDS: ${duty.dutySenior.fullName}\nDJ: ${duty.dutyJunior.fullName}`,
+        start: duty.dutyDate,
+        allDay: true,
+    })) : []), [duties]);
+
     return (
         <UserLayout pageTitle="My Assigned Duties">
-            <div className="space-y-4">
+            <div className="p-4 bg-white rounded-lg shadow">
                 {isLoading && <p className="text-center text-gray-500">Loading your duties...</p>}
                 {error && <p className="text-center text-red-500">Failed to load duties. Please try again later.</p>}
                 
-                {duties && duties.length === 0 && (
-                    <div className="p-6 text-center bg-white rounded-lg shadow">
-                        <h3 className="text-lg font-semibold text-gray-700">No Duties Assigned</h3>
-                        <p className="mt-1 text-gray-500">You have not been assigned to any duties yet.</p>
-                    </div>
+                {duties && (
+                    <FullCalendar
+                        plugins={[dayGridPlugin, listPlugin]}
+                        initialView="listWeek" // Default to a list view for clarity
+                        headerToolbar={{
+                            left: 'prev,next today',
+                            center: 'title',
+                            right: 'dayGridMonth,listWeek'
+                        }}
+                        events={events}
+                        height="80vh"
+                        eventColor="#95a5a6" // Use the grey 'duty' color
+                        noEventsContent="You have not been assigned to any duties."
+                    />
                 )}
-
-                {duties && duties.map(duty => (
-                    <div key={duty.id} className="p-4 bg-white rounded-lg shadow-sm">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-lg font-semibold text-gray-800">
-                                    {format(new Date(duty.dutyDate), 'EEEE, MMMM d, yyyy')}
-                                </p>
-                                <p className="text-sm text-gray-600">
-                                    Your Role: <span className="font-semibold text-portal-blue">{duty.userDuty}</span>
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-sm text-gray-500">
-                                    <span className="font-medium">Duty Senior:</span> {duty.dutySenior.fullName}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                   <span className="font-medium">Duty Junior:</span> {duty.dutyJunior.fullName}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                ))}
             </div>
         </UserLayout>
     );
