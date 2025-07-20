@@ -2,9 +2,9 @@ import { getSession } from 'next-auth/react';
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import { Role, DutyRota, User } from '@prisma/client';
 import useSWR, { useSWRConfig } from 'swr';
-import { useState, FormEvent, useEffect, useMemo } from 'react';
+import { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
 import { PrismaClient } from '@prisma/client';
-import FullCalendar from '@fullcalendar/react';
+import FullCalendar, { EventClickArg } from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
@@ -57,6 +57,24 @@ function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, 
         }
     };
 
+    const handleDelete = async () => {
+        if (!window.confirm('Are you sure you want to delete this duty assignment?')) return;
+
+        const response = await fetch('/api/duties', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dutyDate: selectedDate }),
+        });
+
+        if (response.ok) {
+            onSave();
+            onClose();
+        } else {
+            const data = await response.json();
+            setFormError(data.message || 'Failed to delete assignment.');
+        }
+    };
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
@@ -72,10 +90,17 @@ function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, 
                         <option value="">Select Duty Junior</option>
                         {allUsers.map(user => <option key={user.id} value={user.id}>{user.fullName}</option>)}
                     </select>
-                    <div className="flex justify-end pt-2 space-x-4">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
-                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-portal-blue rounded-md hover:bg-portal-blue-light">Save</button>
+                    <div className="flex justify-between pt-2">
+                        {existingDuty && (
+                             <button type="button" onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Delete</button>
+                        )}
+                        <div className="flex-grow"></div>
+                        <div className="flex space-x-4">
+                            <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+                            <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-portal-blue rounded-md hover:bg-portal-blue-light">Save</button>
+                        </div>
                     </div>
+                    {formError && <p className="mt-2 text-sm text-red-500">{formError}</p>}
                 </form>
             </div>
         </div>
@@ -96,6 +121,13 @@ export default function DutyRotaPage({ allUsers }: InferGetServerSidePropsType<t
 
     const handleDateClick = (arg: DateClickArg) => {
         setSelectedDate(arg.date);
+        setIsModalOpen(true);
+    };
+
+    const handleEventClick = (clickInfo: EventClickArg) => {
+        // FullCalendar's event start time can have timezone offsets, so normalize to a simple date string
+        const clickedDate = new Date(clickInfo.event.startStr);
+        setSelectedDate(clickedDate);
         setIsModalOpen(true);
     };
 
@@ -129,6 +161,7 @@ export default function DutyRotaPage({ allUsers }: InferGetServerSidePropsType<t
                         events={events}
                         height="80vh"
                         dateClick={handleDateClick}
+                        eventClick={handleEventClick}
                         eventColor="#95a5a6"
                     />
                 )}
