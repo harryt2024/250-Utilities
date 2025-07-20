@@ -1,10 +1,10 @@
-import { getSession } from 'next-auth/react';
+import { getSession, useSession } from 'next-auth/react';
 import type { GetServerSideProps } from 'next';
 import { Role } from '@prisma/client';
 import useSWR, { useSWRConfig } from 'swr';
 import type { User } from '@prisma/client';
 import { useState, FormEvent, useEffect } from 'react';
-import AdminLayout from '../../components/AdminLayout'; // Import the layout
+import AdminLayout from '../../components/AdminLayout';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -77,12 +77,14 @@ function CreateUserModal({ isOpen, onClose, onUserCreated }: { isOpen: boolean, 
 
 // --- Edit User Modal Component ---
 function EditUserModal({ user, onClose, onUserUpdated }: { user: UserData | null, onClose: () => void, onUserUpdated: () => void }) {
+  const { data: session } = useSession();
   const [fullName, setFullName] = useState('');
   const [role, setRole] = useState<Role>(Role.USER);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -91,10 +93,13 @@ function EditUserModal({ user, onClose, onUserUpdated }: { user: UserData | null
       setError(null);
       setSuccess(null);
       setPassword('');
+      setIsConfirmingDelete(false);
     }
   }, [user]);
 
   if (!user) return null;
+
+  const isSelf = session?.user?.id === user.id.toString();
 
   const handleDetailsSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -136,6 +141,22 @@ function EditUserModal({ user, onClose, onUserUpdated }: { user: UserData | null
     setIsSubmitting(false);
   };
 
+  const handleDelete = async () => {
+    setIsSubmitting(true);
+    setError(null);
+    const response = await fetch(`/api/users/${user.id}`, {
+        method: 'DELETE',
+    });
+    if (response.ok) {
+        onUserUpdated();
+        onClose();
+    } else {
+        const data = await response.json();
+        setError(data.message || 'Failed to delete user.');
+    }
+    setIsSubmitting(false);
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
@@ -146,7 +167,7 @@ function EditUserModal({ user, onClose, onUserUpdated }: { user: UserData | null
         <form onSubmit={handleDetailsSubmit} className="mt-6 space-y-4">
           <h3 className="text-lg font-semibold border-b">User Details</h3>
           <input type="text" placeholder="Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-md" />
-          <select value={role} onChange={(e) => setRole(e.target.value as Role)} className="w-full px-3 py-2 border border-gray-300 rounded-md">
+          <select value={role} onChange={(e) => setRole(e.target.value as Role)} disabled={isSelf} className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100">
             <option value={Role.USER}>User</option>
             <option value={Role.ADMIN}>Admin</option>
           </select>
@@ -162,6 +183,30 @@ function EditUserModal({ user, onClose, onUserUpdated }: { user: UserData | null
             {isSubmitting ? 'Saving...' : 'Update Password'}
           </button>
         </form>
+
+        <div className="mt-6">
+            <h3 className="text-lg font-semibold border-b">Delete User</h3>
+            {isSelf ? (
+                <p className="mt-2 text-sm text-gray-500">You cannot delete your own account.</p>
+            ) : (
+                <div className="mt-4">
+                    {!isConfirmingDelete ? (
+                        <button onClick={() => setIsConfirmingDelete(true)} className="w-full px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">
+                            Delete User
+                        </button>
+                    ) : (
+                        <div className="p-4 text-center bg-red-50 rounded-md">
+                            <p className="font-semibold text-red-800">Are you sure?</p>
+                            <p className="text-sm text-red-700">This action cannot be undone.</p>
+                            <div className="flex justify-center mt-4 space-x-4">
+                                <button onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-800">Confirm Delete</button>
+                                <button onClick={() => setIsConfirmingDelete(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
 
         <div className="mt-6 text-right">
           <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Close</button>
