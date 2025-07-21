@@ -2,7 +2,7 @@ import { getSession } from 'next-auth/react';
 import type { GetServerSideProps } from 'next';
 import useSWR, { useSWRConfig } from 'swr';
 import type { UniformItem, User, UniformType, UniformCondition } from '@prisma/client';
-import { useState, FormEvent, useEffect, useMemo } from 'react';
+import { useState, FormEvent, useEffect, useMemo, useRef } from 'react';
 import UserLayout from '../components/UserLayout';
 import { Role } from '@prisma/client';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -42,33 +42,52 @@ function AddUniformModal({ isOpen, onClose, onSave }: { isOpen: boolean, onClose
     const [type, setType] = useState<UniformType | ''>('');
     const [size, setSize] = useState('');
     const [condition, setCondition] = useState<UniformCondition | ''>('');
+    const [quantity, setQuantity] = useState('1');
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Refs to manage focus for the rapid entry workflow
+    const sizeInputRef = useRef<HTMLInputElement>(null);
+    const conditionInputRef = useRef<HTMLSelectElement>(null);
 
     useEffect(() => {
         if (isOpen) {
-            setType('');
-            setSize('');
-            setCondition('');
-            setError(null);
+            setType(''); setSize(''); setCondition(''); setQuantity('1'); setError(null); setSuccess(null);
         }
     }, [isOpen]);
 
     if (!isOpen) return null;
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e?: FormEvent) => {
+        if (e) e.preventDefault();
+        if (!type || !size || !condition) {
+            setError("All fields must be filled.");
+            return;
+        }
+        setIsSubmitting(true);
+        setError(null);
+        setSuccess(null);
+        
         const response = await fetch('/api/uniforms', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ type, size, condition }),
+            body: JSON.stringify({ type, size, condition, quantity }),
         });
+
         if (response.ok) {
             onSave();
-            onClose();
+            setSuccess(`${quantity} item(s) of type '${uniformTypeMap[type]}' added.`);
+            // Reset for next entry
+            setSize('');
+            setCondition('');
+            setQuantity('1');
+            sizeInputRef.current?.focus(); // Move focus back to the size input
         } else {
             const data = await response.json();
             setError(data.message || 'Failed to add item.');
         }
+        setIsSubmitting(false);
     };
 
     return (
@@ -80,16 +99,22 @@ function AddUniformModal({ isOpen, onClose, onSave }: { isOpen: boolean, onClose
                         <option value="">Select Type</option>
                         {Object.entries(uniformTypeMap).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
                     </select>
-                    <input type="text" placeholder="Size" value={size} onChange={e => setSize(e.target.value)} required className="w-full px-3 py-2 border rounded-md" />
-                    <select value={condition} onChange={e => setCondition(e.target.value as UniformCondition)} required className="w-full px-3 py-2 border rounded-md">
+                    <input ref={sizeInputRef} type="text" placeholder="Size" value={size} onChange={e => setSize(e.target.value)} required className="w-full px-3 py-2 border rounded-md" />
+                    <select ref={conditionInputRef} value={condition} onChange={e => setCondition(e.target.value as UniformCondition)} required className="w-full px-3 py-2 border rounded-md">
                         <option value="">Select Condition</option>
                         {Object.entries(uniformConditionMap).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
                     </select>
-                    <div className="flex justify-end pt-2 space-x-4">
-                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
-                        <button type="submit" className="px-4 py-2 text-sm font-medium text-white rounded-md bg-portal-blue hover:bg-portal-blue-light">Add Item</button>
-                    </div>
+                    <input type="number" placeholder="Quantity" value={quantity} onChange={e => setQuantity(e.target.value)} min="1" required className="w-full px-3 py-2 border rounded-md" />
+                    
+                    {success && <p className="text-sm text-green-600">{success}</p>}
                     {error && <p className="text-sm text-red-500">{error}</p>}
+
+                    <div className="flex justify-end pt-2 space-x-4">
+                        <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium bg-gray-200 rounded-md hover:bg-gray-300">Close</button>
+                        <button type="submit" disabled={isSubmitting} className="px-4 py-2 text-sm font-medium text-white rounded-md bg-portal-blue hover:bg-portal-blue-light">
+                            {isSubmitting ? 'Adding...' : 'Add Item'}
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -214,19 +239,12 @@ export default function UniformPage() {
                     </tbody>
                 </table>
             </div>
-            {/* Add global styles for printing */}
             <style jsx global>{`
                 @media print {
-                    body {
-                        background-color: white;
-                    }
-                    .print-layout-hidden {
-                        display: none;
-                    }
-                    .printable-area {
-                        box-shadow: none;
-                        border: none;
-                    }
+                    body { background-color: white !important; }
+                    .print-layout-hidden { display: none !important; }
+                    .printable-area { box-shadow: none !important; border: none !important; }
+                    @page { size: landscape; }
                 }
             `}</style>
         </UserLayout>

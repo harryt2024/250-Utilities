@@ -31,24 +31,30 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
   }
   // Handle POST request to create a new uniform item
   else if (req.method === 'POST') {
-    const { type, size, condition } = req.body;
+    const { type, size, condition, quantity } = req.body;
+    const numQuantity = parseInt(quantity) || 1;
 
     if (!type || !size || !condition) {
       return res.status(400).json({ message: 'All fields are required.' });
     }
 
     try {
-      const uniformItem = await prisma.uniformItem.create({
-        data: {
-          type,
-          size,
-          condition,
-          addedById: parseInt(session.user.id),
-        },
+      // Create an array of items to be created
+      const itemsToCreate = Array.from({ length: numQuantity }, () => ({
+        type,
+        size,
+        condition,
+        addedById: parseInt(session.user.id),
+      }));
+
+      // Use createMany for efficient bulk insertion
+      await prisma.uniformItem.createMany({
+        data: itemsToCreate,
       });
-      return res.status(201).json(uniformItem);
+      
+      return res.status(201).json({ message: `${numQuantity} item(s) created successfully.` });
     } catch (error) {
-      console.error('Failed to create uniform item:', error);
+      console.error('Failed to create uniform item(s):', error);
       return res.status(500).json({ message: 'Something went wrong.' });
     }
   }
