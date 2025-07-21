@@ -5,6 +5,12 @@ import { PrismaClient, Role } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Helper function to convert a YYYY-MM-DD string to a UTC Date object
+function toUTCDate(dateString: string) {
+    const date = new Date(dateString);
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+}
+
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
 
@@ -12,7 +18,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     return res.status(401).json({ message: 'Unauthorized.' });
   }
 
-  // Handle GET request to fetch all duty rota assignments
   if (req.method === 'GET') {
     try {
       const duties = await prisma.dutyRota.findMany({
@@ -26,11 +31,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       });
       return res.status(200).json(duties);
     } catch (error) {
-      console.error('Failed to fetch duties:', error);
       return res.status(500).json({ message: 'Something went wrong.' });
     }
   }
-  // Handle POST request to create or update a duty assignment
   else if (req.method === 'POST') {
     const { dutyDate, dutySeniorId, dutyJuniorId } = req.body;
 
@@ -43,38 +46,35 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
 
     try {
-      // Use upsert to create a new entry or update an existing one for the same date
+      const date = toUTCDate(dutyDate);
       const duty = await prisma.dutyRota.upsert({
-        where: { dutyDate: new Date(dutyDate) },
+        where: { dutyDate: date },
         update: {
           dutySeniorId: parseInt(dutySeniorId),
           dutyJuniorId: parseInt(dutyJuniorId),
         },
         create: {
-          dutyDate: new Date(dutyDate),
+          dutyDate: date,
           dutySeniorId: parseInt(dutySeniorId),
           dutyJuniorId: parseInt(dutyJuniorId),
         },
       });
       return res.status(200).json(duty);
     } catch (error) {
-      console.error('Failed to save duty assignment:', error);
       return res.status(500).json({ message: 'Something went wrong.' });
     }
   }
-  // Handle DELETE request to remove a duty assignment
   else if (req.method === 'DELETE') {
     const { dutyDate } = req.body;
     if (!dutyDate) {
-        return res.status(400).json({ message: 'Date is required to delete an assignment.' });
+        return res.status(400).json({ message: 'Date is required.' });
     }
     try {
         await prisma.dutyRota.delete({
-            where: { dutyDate: new Date(dutyDate) },
+            where: { dutyDate: toUTCDate(dutyDate) },
         });
-        return res.status(200).json({ message: 'Duty assignment deleted successfully.' });
+        return res.status(200).json({ message: 'Assignment deleted.' });
     } catch (error) {
-        console.error('Failed to delete duty assignment:', error);
         return res.status(500).json({ message: 'Something went wrong.' });
     }
   }

@@ -4,8 +4,7 @@ import { Role, DutyRota, User } from '@prisma/client';
 import useSWR, { useSWRConfig } from 'swr';
 import { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
 import { PrismaClient } from '@prisma/client';
-import FullCalendar from '@fullcalendar/react';
-import type { EventClickArg } from '@fullcalendar/core';
+import FullCalendar, { EventClickArg } from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
@@ -19,6 +18,14 @@ type DutyData = (DutyRota & {
     dutyJunior: { fullName: string };
 });
 
+// Helper function to format a Date object to a YYYY-MM-DD string, ignoring timezones
+function formatDateToYYYYMMDD(date: Date) {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, existingDuty }: {
     isOpen: boolean;
     onClose: () => void;
@@ -30,14 +37,12 @@ function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, 
     const [dutySeniorId, setDutySeniorId] = useState('');
     const [dutyJuniorId, setDutyJuniorId] = useState('');
     const [formError, setFormError] = useState<string | null>(null);
-    const [isConfirmingDelete, setIsConfirmingDelete] = useState(false); // New state for delete confirmation
 
     useEffect(() => {
         if (isOpen) {
             setDutySeniorId(existingDuty?.dutySeniorId.toString() || '');
             setDutyJuniorId(existingDuty?.dutyJuniorId.toString() || '');
             setFormError(null);
-            setIsConfirmingDelete(false); // Reset confirmation state when modal opens
         }
     }, [isOpen, existingDuty]);
 
@@ -46,10 +51,11 @@ function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setFormError(null);
+        const formattedDate = formatDateToYYYYMMDD(selectedDate);
         const response = await fetch('/api/duties', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dutyDate: selectedDate, dutySeniorId, dutyJuniorId }),
+            body: JSON.stringify({ dutyDate: formattedDate, dutySeniorId, dutyJuniorId }),
         });
         if (response.ok) {
             onSave();
@@ -61,19 +67,19 @@ function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, 
     };
 
     const handleDelete = async () => {
+        if (!window.confirm('Are you sure you want to delete this duty assignment?')) return;
+        const formattedDate = formatDateToYYYYMMDD(selectedDate);
         const response = await fetch('/api/duties', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dutyDate: selectedDate }),
+            body: JSON.stringify({ dutyDate: formattedDate }),
         });
-
         if (response.ok) {
             onSave();
             onClose();
         } else {
             const data = await response.json();
             setFormError(data.message || 'Failed to delete assignment.');
-            setIsConfirmingDelete(false); // Hide confirmation on error
         }
     };
 
@@ -92,21 +98,11 @@ function DutyAssignmentModal({ isOpen, onClose, onSave, selectedDate, allUsers, 
                         <option value="">Select Duty Junior</option>
                         {allUsers.map(user => <option key={user.id} value={user.id}>{user.fullName}</option>)}
                     </select>
-                    <div className="flex items-center justify-between pt-2">
-                        {/* Conditional rendering for delete confirmation */}
-                        {existingDuty && !isConfirmingDelete && (
-                             <button type="button" onClick={() => setIsConfirmingDelete(true)} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Delete</button>
+                    <div className="flex justify-between pt-2">
+                        {existingDuty && (
+                             <button type="button" onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700">Delete</button>
                         )}
-                        {existingDuty && isConfirmingDelete && (
-                            <div className="flex space-x-2">
-                                <button type="button" onClick={handleDelete} className="px-4 py-2 text-sm font-medium text-white bg-red-700 rounded-md hover:bg-red-800">Confirm</button>
-                                <button type="button" onClick={() => setIsConfirmingDelete(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
-                            </div>
-                        )}
-                        
-                        {/* Spacer to keep Save/Cancel buttons on the right */}
-                        {!existingDuty && <div />}
-
+                        <div className="flex-grow"></div>
                         <div className="flex space-x-4">
                             <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
                             <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-portal-blue rounded-md hover:bg-portal-blue-light">Save</button>
