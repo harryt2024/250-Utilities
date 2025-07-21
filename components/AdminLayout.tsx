@@ -26,7 +26,7 @@ export default function AdminLayout({ children, pageTitle }: AdminLayoutProps) {
       {/* Sidebar Navigation */}
       <aside className="w-64 flex-shrink-0 bg-portal-dark text-white flex flex-col">
         <div className="h-16 flex items-center justify-center text-2xl font-bold border-b border-portal-dark-light">
-          <Link href="/">RAFAC Rota</Link>
+          <Link href="/">250 (Halifax) Sqn</Link>
         </div>
         <nav className="flex-grow px-4 py-4">
           <ul>

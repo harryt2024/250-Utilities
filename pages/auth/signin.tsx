@@ -21,7 +21,7 @@ export default function SignIn({ csrfToken }: InferGetServerSidePropsType<typeof
       redirect: false, // Do not redirect automatically, handle it manually
       username: username,
       password: password,
-      callbackUrl: `${window.location.origin}/admin/dashboard`, // Redirect to admin dashboard on success
+      callbackUrl: `${window.location.origin}/`, // Redirect all users to the main dashboard on success
     });
 
     if (result?.error) {
@@ -29,8 +29,8 @@ export default function SignIn({ csrfToken }: InferGetServerSidePropsType<typeof
       setError('Invalid username or password. Please try again.');
       console.error('Sign-in error:', result.error);
     } else if (result?.ok) {
-      // If sign-in is successful, redirect to the dashboard or home page
-      router.push(result.url || '/admin/dashboard');
+      // If sign-in is successful, redirect to the main dashboard
+      router.push(result.url || '/');
     }
   };
 
@@ -100,7 +100,6 @@ export default function SignIn({ csrfToken }: InferGetServerSidePropsType<typeof
 
 // We need to get the CSRF token on the server and pass it to the page
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  // FIX: Provide a null fallback for the csrfToken to prevent serialization errors.
   const csrfToken = await getCsrfToken(context) ?? null;
   return {
     props: { csrfToken },

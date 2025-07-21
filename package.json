@@ -1,11 +1,17 @@
 {
   "name": "rafsquad-rota",
   "version": "0.1.0",
+  "homepage": "./",
+  "main": "main.js",
+
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "electron:dev": "electron .",
+    "electron:build": "electron-builder"
+
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.18",
@@ -38,11 +44,31 @@
     "@types/node": "^24.0.12",
     "@types/react": "19.1.8",
     "autoprefixer": "^10.4.14",
+    "electron": "^37.2.3",
+    "electron-builder": "^26.0.12",
     "lucide-react": "^0.525.0",
     "postcss": "^8.4.31",
     "prisma": "latest",
     "tailwindcss": "^3.4.1",
     "ts-node": "^10.9.2",
     "typescript": "5.8.3"
+  },
+  "build": {
+  "appId": "com.rafac.rotasystem",
+  "productName": "RAFAC Rota System",
+  "files": [
+    "main.js",
+    "preload.js"
+  ],
+  "win": {
+    "target": "nsis"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
   }
 }
+
+
+}
+
