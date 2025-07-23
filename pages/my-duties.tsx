@@ -19,22 +19,26 @@ type MyDutyData = (DutyRota & {
 export default function MyDutiesPage() {
     const { data: duties, error, isLoading } = useSWR<MyDutyData[]>('/api/rota/my-duties', fetcher);
 
-    const events = useMemo(() => (duties ? duties.map(duty => ({
-        title: `Your Role: ${duty.userDuty}\nDS: ${duty.dutySenior.fullName}\nDJ: ${duty.dutyJunior.fullName}`,
-        start: duty.dutyDate,
-        allDay: true,
-    })) : []), [duties]);
+    const events = useMemo(() => {
+        if (!Array.isArray(duties)) return []; // Fix: Ensure duties is an array
+        
+        return duties.map(duty => ({
+            title: `Your Role: ${duty.userDuty}\nDS: ${duty.dutySenior.fullName}\nDJ: ${duty.dutyJunior.fullName}`,
+            start: duty.dutyDate,
+            allDay: true,
+        }));
+    }, [duties]);
 
     return (
         <UserLayout pageTitle="My Assigned Duties">
             <div className="p-4 bg-white rounded-lg shadow">
                 {isLoading && <p className="text-center text-gray-500">Loading your duties...</p>}
-                {error && <p className="text-center text-red-500">Failed to load duties. Please try again later.</p>}
+                {error && <p className="text-center text-red-500">Failed to load duties.</p>}
                 
-                {duties && (
+                {Array.isArray(duties) && (
                     <FullCalendar
                         plugins={[dayGridPlugin, listPlugin]}
-                        initialView="listWeek" // Default to a list view for clarity
+                        initialView="listWeek"
                         headerToolbar={{
                             left: 'prev,next today',
                             center: 'title',
@@ -42,7 +46,7 @@ export default function MyDutiesPage() {
                         }}
                         events={events}
                         height="80vh"
-                        eventColor="#95a5a6" // Use the grey 'duty' color
+                        eventColor="#95a5a6"
                         noEventsContent="You have not been assigned to any duties."
                     />
                 )}
