@@ -8,6 +8,7 @@ import type { EventClickArg } from '@fullcalendar/core'; // Correct import for E
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
+import UserLayout from '../components/UserLayout';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
