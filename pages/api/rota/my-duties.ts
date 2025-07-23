@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from "next-auth/next";
-// FIX: Corrected the import path to be one level up.
-import { authOptions } from "../auth/[...nextauth]";
+import { authOptions } from "../../auth/[...nextauth]";
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -21,13 +20,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       const myDuties = await prisma.dutyRota.findMany({
         where: {
           OR: [
-            { dutySeniorId: userId },
-            { dutyJuniorId: userId },
+            { actualSeniorId: userId },
+            { actualJuniorId: userId },
           ],
         },
         include: {
-          dutySenior: { select: { fullName: true } },
-          dutyJunior: { select: { fullName: true } },
+          actualSenior: { select: { fullName: true } },
+          actualJunior: { select: { fullName: true } },
         },
         orderBy: {
           dutyDate: 'asc', // Show upcoming duties first
@@ -37,7 +36,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       // Add a 'role' to each duty object to show what the user's role was
       const dutiesWithRole = myDuties.map(duty => ({
         ...duty,
-        userDuty: duty.dutySeniorId === userId ? 'Duty Senior' : 'Duty Junior',
+        userDuty: duty.actualSeniorId === userId ? 'Duty Senior' : 'Duty Junior',
       }));
 
       return res.status(200).json(dutiesWithRole);
