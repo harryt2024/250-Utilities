@@ -23,24 +23,36 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
     try {
         // Use a transaction to perform multiple database operations safely.
-        // If any operation fails, all of them will be rolled back.
         await prisma.$transaction(async (tx) => {
             // 1. Delete all lesson assignments for this user.
             await tx.lessonAssignment.deleteMany({
                 where: { userId: userIdToModify },
             });
 
-            // 2. Delete all duty rota entries where this user is either senior or junior.
+            // 2. Delete all duty rota entries where this user was involved.
+            // FIX: Use the new schema with original and actual personnel fields.
             await tx.dutyRota.deleteMany({
                 where: {
                     OR: [
-                        { dutySeniorId: userIdToModify },
-                        { dutyJuniorId: userIdToModify },
+                        { originalSeniorId: userIdToModify },
+                        { originalJuniorId: userIdToModify },
+                        { actualSeniorId: userIdToModify },
+                        { actualJuniorId: userIdToModify },
                     ],
                 },
             });
+            
+            // 3. Delete all absences submitted by this user.
+            await tx.absence.deleteMany({
+                where: { userId: userIdToModify },
+            });
 
-            // 3. Now it's safe to delete the user.
+            // 4. Delete all uniform items added by this user.
+            await tx.uniformItem.deleteMany({
+                where: { addedById: userIdToModify },
+            });
+
+            // 5. Now it's safe to delete the user.
             await tx.user.delete({
                 where: { id: userIdToModify },
             });
