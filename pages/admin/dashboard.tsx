@@ -3,7 +3,7 @@ import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import AdminLayout from '../../components/AdminLayout'; // Import the new layout
-import { BookUser, CalendarCheck, ClipboardList } from 'lucide-react';
+import { BookUser, CalendarCheck, ClipboardList, UserCheck, UserX, Home, Shirt, BarChart3 } from 'lucide-react';
 
 export default function AdminDashboard({ user }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   return (
@@ -17,7 +17,20 @@ export default function AdminDashboard({ user }: InferGetServerSidePropsType<typ
       
       {/* Grid for navigation cards */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        
+          <Link href="/" className="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div className="flex items-center">
+              <div className="p-3 bg-blue-100 rounded-full">
+                <Home className="w-6 h-6 text-blue-600" />
+              </div>
+              <h3 className="ml-4 text-lg font-semibold text-gray-700">Home</h3>
+            </div>
+            <p className="mt-3 text-sm text-gray-600">
+              Return to the standard user dashboard.
+            </p>
+        </Link>
+
+
+
         {/* User Management Card */}
         <Link href="/admin/users" className="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
           <div className="flex items-center">
@@ -56,7 +69,39 @@ export default function AdminDashboard({ user }: InferGetServerSidePropsType<typ
             Assign Duty Senior and Duty Junior using a calendar interface.
           </p>
         </Link>
-
+        <Link href="/absences" className="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <div className="flex items-center">
+            <div className="p-3 bg-red-100 rounded-full">
+              <UserX className="w-6 h-6 text-red-600" />
+            </div>
+            <h3 className="ml-4 text-lg font-semibold text-gray-700">Absence Management</h3>
+          </div>
+          <p className="mt-3 text-sm text-gray-600">
+            Confirm the attendance of NCO's for their duties.
+          </p>
+        </Link>
+                <Link href="/absences" className="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+          <div className="flex items-center">
+            <div className="p-3 bg-purple-100 rounded-full">
+              <Shirt className="w-6 h-6 text-purple-600" />
+            </div>
+            <h3 className="ml-4 text-lg font-semibold text-gray-700">Uniform</h3>
+          </div>
+          <p className="mt-3 text-sm text-gray-600">
+            Manage the uniform that the squadron currently has in stores. This results in you leaving the admin page.
+          </p>
+        </Link>
+          <Link href="/stats" className="block p-6 bg-white rounded-lg shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+            <div className="flex items-center">
+              <div className="p-3 bg-gray-100 rounded-full">
+                <BarChart3 className="w-6 h-6 text-gray-600" />
+              </div>
+              <h3 className="ml-4 text-lg font-semibold text-gray-700">Statistics</h3>
+            </div>
+            <p className="mt-3 text-sm text-gray-600">
+              View who's been duty and other useful statistics.
+            </p>
+        </Link>
       </div>
     </AdminLayout>
   );

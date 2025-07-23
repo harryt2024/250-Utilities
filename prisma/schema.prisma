@@ -24,11 +24,14 @@ model User {
   createdAt          DateTime             @default(now())
 
   // --- Relations ---
+  originalDutiesSenior DutyRota[] @relation("OriginalDutySenior")
+  originalDutiesJunior DutyRota[] @relation("OriginalDutyJunior")
+  actualDutiesSenior   DutyRota[] @relation("ActualDutySenior")
+  actualDutiesJunior   DutyRota[] @relation("ActualDutyJunior")
   lessonsCreated     Lesson[]             @relation("CreatedBy")
   lessonAssignments  LessonAssignment[]
-  dutyRotaSenior     DutyRota[]           @relation("DutySenior")
-  dutyRotaJunior     DutyRota[]           @relation("DutyJunior")
   uniformItemsAdded UniformItem[]
+  absences           Absence[]
 
   // NextAuth.js specific fields for the adapter
   accounts Account[]
@@ -121,17 +124,32 @@ model DutyRota {
   id             Int      @id @default(autoincrement())
   dutyDate       DateTime @unique @db.Date
 
-  // --- Relations ---
-  dutySenior     User     @relation("DutySenior", fields: [dutySeniorId], references: [id])
-  dutySeniorId   Int
-  dutyJunior     User     @relation("DutyJunior", fields: [dutyJuniorId], references: [id])
-  dutyJuniorId   Int
+  // Who was originally scheduled
+  originalSenior   User     @relation("OriginalDutySenior", fields: [originalSeniorId], references: [id])
+  originalSeniorId Int
+  originalJunior   User     @relation("OriginalDutyJunior", fields: [originalJuniorId], references: [id])
+  originalJuniorId Int
+
+  // Who actually performed the duty
+  actualSenior     User     @relation("ActualDutySenior", fields: [actualSeniorId], references: [id])
+  actualSeniorId   Int
+  actualJunior     User     @relation("ActualDutyJunior", fields: [actualJuniorId], references: [id])
+  actualJuniorId   Int
+
+  seniorStatus DutyStatus @default(UNCONFIRMED)
+  juniorStatus DutyStatus @default(UNCONFIRMED)
 }
 
 // Enum for User Roles
 enum Role {
   USER
   ADMIN
+}
+
+enum DutyStatus {
+  UNCONFIRMED
+  ATTENDED
+  ABSENT
 }
 
 
@@ -172,3 +190,13 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+model Absence {
+  id        Int      @id @default(autoincrement())
+  startDate DateTime @db.Date
+  endDate   DateTime @db.Date
+  reason    String?  @db.Text
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+}
+

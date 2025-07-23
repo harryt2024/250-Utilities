@@ -1,14 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-import { PrismaClient, Role } from '@prisma/client';
+import { PrismaClient, Role, DutyStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Helper function to convert a YYYY-MM-DD string to a UTC Date object
 function toUTCDate(dateString: string) {
-    const date = new Date(dateString);
-    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(Date.UTC(year, month - 1, day));
 }
 
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
@@ -22,12 +21,12 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     try {
       const duties = await prisma.dutyRota.findMany({
         include: {
-          dutySenior: { select: { fullName: true } },
-          dutyJunior: { select: { fullName: true } },
+          actualSenior: { select: { fullName: true } },
+          actualJunior: { select: { fullName: true } },
+          originalSenior: { select: { fullName: true } },
+          originalJunior: { select: { fullName: true } },
         },
-        orderBy: {
-          dutyDate: 'desc',
-        },
+        orderBy: { dutyDate: 'desc' },
       });
       return res.status(200).json(duties);
     } catch (error) {
@@ -35,32 +34,34 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
     }
   }
   else if (req.method === 'POST') {
-    const { dutyDate, dutySeniorId, dutyJuniorId } = req.body;
-
-    if (!dutyDate || !dutySeniorId || !dutyJuniorId) {
+    const { dutyDate, originalSeniorId, originalJuniorId, actualSeniorId, actualJuniorId, seniorStatus, juniorStatus } = req.body;
+    
+    if (!dutyDate || !actualSeniorId || !actualJuniorId) {
       return res.status(400).json({ message: 'All fields are required.' });
     }
-    
-    if (dutySeniorId === dutyJuniorId) {
-        return res.status(400).json({ message: 'Duty Senior and Duty Junior cannot be the same person.' });
-    }
-
     try {
       const date = toUTCDate(dutyDate);
       const duty = await prisma.dutyRota.upsert({
         where: { dutyDate: date },
         update: {
-          dutySeniorId: parseInt(dutySeniorId),
-          dutyJuniorId: parseInt(dutyJuniorId),
+          actualSeniorId: parseInt(actualSeniorId),
+          actualJuniorId: parseInt(actualJuniorId),
+          seniorStatus: seniorStatus,
+          juniorStatus: juniorStatus,
         },
         create: {
           dutyDate: date,
-          dutySeniorId: parseInt(dutySeniorId),
-          dutyJuniorId: parseInt(dutyJuniorId),
+          originalSeniorId: parseInt(originalSeniorId || actualSeniorId),
+          originalJuniorId: parseInt(originalJuniorId || actualJuniorId),
+          actualSeniorId: parseInt(actualSeniorId),
+          actualJuniorId: parseInt(actualJuniorId),
+          seniorStatus: seniorStatus,
+          juniorStatus: juniorStatus,
         },
       });
       return res.status(200).json(duty);
     } catch (error) {
+      console.error("Error saving duty:", error);
       return res.status(500).json({ message: 'Something went wrong.' });
     }
   }

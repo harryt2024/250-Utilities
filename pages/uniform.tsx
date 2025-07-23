@@ -47,9 +47,7 @@ function AddUniformModal({ isOpen, onClose, onSave }: { isOpen: boolean, onClose
     const [success, setSuccess] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Refs to manage focus for the rapid entry workflow
     const sizeInputRef = useRef<HTMLInputElement>(null);
-    const conditionInputRef = useRef<HTMLSelectElement>(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -78,11 +76,10 @@ function AddUniformModal({ isOpen, onClose, onSave }: { isOpen: boolean, onClose
         if (response.ok) {
             onSave();
             setSuccess(`${quantity} item(s) of type '${uniformTypeMap[type]}' added.`);
-            // Reset for next entry
             setSize('');
             setCondition('');
             setQuantity('1');
-            sizeInputRef.current?.focus(); // Move focus back to the size input
+            sizeInputRef.current?.focus();
         } else {
             const data = await response.json();
             setError(data.message || 'Failed to add item.');
@@ -100,7 +97,7 @@ function AddUniformModal({ isOpen, onClose, onSave }: { isOpen: boolean, onClose
                         {Object.entries(uniformTypeMap).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
                     </select>
                     <input ref={sizeInputRef} type="text" placeholder="Size" value={size} onChange={e => setSize(e.target.value)} required className="w-full px-3 py-2 border rounded-md" />
-                    <select ref={conditionInputRef} value={condition} onChange={e => setCondition(e.target.value as UniformCondition)} required className="w-full px-3 py-2 border rounded-md">
+                    <select value={condition} onChange={e => setCondition(e.target.value as UniformCondition)} required className="w-full px-3 py-2 border rounded-md">
                         <option value="">Select Condition</option>
                         {Object.entries(uniformConditionMap).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
                     </select>
@@ -130,7 +127,6 @@ export default function UniformPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null);
 
-    // State for filtering and sorting
     const [typeFilter, setTypeFilter] = useState('');
     const [sizeFilter, setSizeFilter] = useState('');
     const [conditionFilter, setConditionFilter] = useState('');
@@ -185,8 +181,7 @@ export default function UniformPage() {
             <AddUniformModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={() => mutate('/api/uniforms')} />
             
             <div className="p-4 mb-6 bg-white rounded-lg shadow print-layout-hidden">
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                    {/* Filters */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)} className="w-full px-3 py-2 border rounded-md">
                         <option value="">Filter by Type...</option>
                         {Object.entries(uniformTypeMap).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
@@ -196,7 +191,6 @@ export default function UniformPage() {
                         <option value="">Filter by Condition...</option>
                         {Object.entries(uniformConditionMap).map(([key, value]) => <option key={key} value={key}>{value}</option>)}
                     </select>
-                    {/* Action Buttons */}
                     <div className="flex items-center justify-end space-x-2">
                         <button onClick={() => window.print()} className="px-4 py-2 font-medium text-white bg-gray-500 rounded-md hover:bg-gray-600">Print</button>
                         <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 font-medium text-white rounded-md bg-portal-blue hover:bg-portal-blue-light">Add Item</button>
@@ -217,6 +211,7 @@ export default function UniformPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                         {isLoading && <tr><td colSpan={5} className="py-4 text-center text-gray-500">Loading...</td></tr>}
+                        {error && <tr><td colSpan={5} className="py-4 text-center text-red-500">Failed to load uniform items.</td></tr>}
                         {filteredAndSortedUniforms.map(item => (
                             <tr key={item.id}>
                                 <td className="px-6 py-4 whitespace-nowrap">{uniformTypeMap[item.type]}</td>

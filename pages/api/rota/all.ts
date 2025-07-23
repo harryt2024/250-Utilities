@@ -8,7 +8,6 @@ const prisma = new PrismaClient();
 export default async function handle(req: NextApiRequest, res: NextApiResponse) {
   const session = await getServerSession(req, res, authOptions);
 
-  // Any authenticated user can view the rota
   if (!session) {
     return res.status(401).json({ message: 'Unauthorized.' });
   }
@@ -27,23 +26,37 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
           dutyJunior: { select: { fullName: true } },
         }
       });
+      
+      // Fetch all absences
+      const absences = await prisma.absence.findMany({
+        include: {
+            user: { select: { fullName: true } },
+        }
+      });
 
       // Combine and format the data for the calendar
       const lessonEvents = lessons.map(lesson => ({
         title: lesson.title,
         start: lesson.lessonDate,
         end: lesson.lessonDate,
-        type: 'lesson', // Add a type for styling
+        type: 'lesson',
       }));
 
       const dutyEvents = duties.map(duty => ({
         title: `DS: ${duty.dutySenior.fullName}\nDJ: ${duty.dutyJunior.fullName}`,
         start: duty.dutyDate,
         end: duty.dutyDate,
-        type: 'duty', // Add a type for styling
+        type: 'duty',
       }));
 
-      const allEvents = [...lessonEvents, ...dutyEvents];
+      const absenceEvents = absences.map(absence => ({
+        title: `${absence.user.fullName} (Absent)`,
+        start: absence.startDate,
+        end: new Date(new Date(absence.endDate).getTime() + 86400000).toISOString().split('T')[0],
+        type: 'absence',
+      }));
+
+      const allEvents = [...lessonEvents, ...dutyEvents, ...absenceEvents];
 
       return res.status(200).json(allEvents);
 

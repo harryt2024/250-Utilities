@@ -3,7 +3,7 @@ import type { GetServerSideProps } from 'next';
 import useSWR from 'swr';
 import UserLayout from '../components/UserLayout';
 import FullCalendar from '@fullcalendar/react';
-import type { EventClickArg } from '@fullcalendar/core'; // Correct import for EventClickArg
+import type { EventClickArg } from '@fullcalendar/core';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import listPlugin from '@fullcalendar/list';
@@ -18,10 +18,9 @@ interface RotaEvent {
     allDay: boolean;
     backgroundColor: string;
     borderColor: string;
-    type: 'lesson' | 'duty';
+    type: 'lesson' | 'duty' | 'absence';
 }
 
-// --- Read-Only Info Modal Component ---
 function RotaInfoModal({ isOpen, onClose, event }: { isOpen: boolean, onClose: () => void, event: RotaEvent | null }) {
     if (!isOpen || !event) return null;
 
@@ -32,6 +31,12 @@ function RotaInfoModal({ isOpen, onClose, event }: { isOpen: boolean, onClose: (
         day: 'numeric',
     });
 
+    const getTitle = () => {
+        if (event.type === 'lesson') return 'Lesson';
+        if (event.type === 'duty') return 'Duty';
+        return 'Absence';
+    }
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
             <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-xl">
@@ -39,8 +44,8 @@ function RotaInfoModal({ isOpen, onClose, event }: { isOpen: boolean, onClose: (
                     Details for {formattedDate}
                 </h2>
                 <div className="mt-4 space-y-2">
-                    <div className={`p-4 rounded-md ${event.type === 'lesson' ? 'bg-blue-50' : 'bg-gray-50'}`}>
-                        <h3 className="font-semibold text-gray-800">{event.type === 'lesson' ? 'Lesson' : 'Duty'}</h3>
+                    <div className={`p-4 rounded-md ${event.type === 'lesson' ? 'bg-blue-50' : event.type === 'duty' ? 'bg-gray-50' : 'bg-red-50'}`}>
+                        <h3 className="font-semibold text-gray-800">{getTitle()}</h3>
                         <p className="text-gray-700" style={{ whiteSpace: 'pre-line' }}>{event.title}</p>
                     </div>
                 </div>
@@ -58,18 +63,24 @@ export default function RotaPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<RotaEvent | null>(null);
 
+    const getEventColor = (type: string) => {
+        if (type === 'lesson') return '#3498db';
+        if (type === 'duty') return '#95a5a6';
+        if (type === 'absence') return '#e74c3c';
+        return '#373737';
+    };
+
     const events: RotaEvent[] = useMemo(() => (apiEvents ? apiEvents.map((event: any) => ({
         title: event.title.replace(/\\n/g, '\n'),
         start: event.start,
         end: event.end,
         allDay: true,
-        backgroundColor: event.type === 'lesson' ? '#3498db' : '#95a5a6',
-        borderColor: event.type === 'lesson' ? '#3498db' : '#95a5a6',
+        backgroundColor: getEventColor(event.type),
+        borderColor: getEventColor(event.type),
         type: event.type,
     })) : []), [apiEvents]);
 
     const handleEventClick = useCallback((clickInfo: EventClickArg) => {
-        // We cast the extendedProps to get our custom 'type' property
         const eventData = { ...clickInfo.event.toPlainObject(), extendedProps: clickInfo.event.extendedProps } as unknown as RotaEvent;
         setSelectedEvent(eventData);
         setIsModalOpen(true);
