@@ -78,7 +78,6 @@ export default function AbsencesPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const events = useMemo(() => {
-        // FIX: Ensure absences is an array before mapping
         if (!Array.isArray(absences)) return [];
         
         return absences.map(absence => ({
@@ -102,8 +101,6 @@ export default function AbsencesPage() {
             <div className="p-4 bg-white rounded-lg shadow">
                 {isLoading && <p className="text-center text-gray-500">Loading calendar...</p>}
                 {error && <p className="text-center text-red-500">Failed to load absences.</p>}
-                
-                {/* FIX: Use a more robust check to ensure data is an array before rendering */}
                 {Array.isArray(absences) && (
                     <FullCalendar
                         plugins={[dayGridPlugin, listPlugin]}

@@ -14,27 +14,24 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
 
   if (req.method === 'GET') {
     try {
-      // Fetch all lessons
       const lessons = await prisma.lesson.findMany({
         select: { id: true, title: true, lessonDate: true }
       });
 
-      // Fetch all duty assignments
       const duties = await prisma.dutyRota.findMany({
         include: {
-          dutySenior: { select: { fullName: true } },
-          dutyJunior: { select: { fullName: true } },
+          // FIX: Use the new relation names
+          actualSenior: { select: { fullName: true } },
+          actualJunior: { select: { fullName: true } },
         }
       });
       
-      // Fetch all absences
       const absences = await prisma.absence.findMany({
         include: {
             user: { select: { fullName: true } },
         }
       });
 
-      // Combine and format the data for the calendar
       const lessonEvents = lessons.map(lesson => ({
         title: lesson.title,
         start: lesson.lessonDate,
@@ -43,7 +40,8 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
       }));
 
       const dutyEvents = duties.map(duty => ({
-        title: `DS: ${duty.dutySenior.fullName}\nDJ: ${duty.dutyJunior.fullName}`,
+        // FIX: Use the new relation names
+        title: `DS: ${duty.actualSenior.fullName}\nDJ: ${duty.actualJunior.fullName}`,
         start: duty.dutyDate,
         end: duty.dutyDate,
         type: 'duty',
