@@ -3,8 +3,8 @@ import type { GetServerSideProps } from 'next';
 import useSWR, { useSWRConfig } from 'swr';
 import type { Absence, User } from '@prisma/client';
 import { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
-import UserLayout from '../components/UserLayout';
-import FullCalendar, { EventClickArg } from '@fullcalendar/react';
+import FullCalendar from '@fullcalendar/react';
+import type { EventClickArg } from '@fullcalendar/core'; // Correct import for EventClickArg
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
