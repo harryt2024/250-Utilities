@@ -49,7 +49,7 @@ export default function HomePage() {
           RAFAC Rota System
         </h1>
         <p className="mt-4 text-lg text-gray-600">
-          Please sign in to view the rota and manage your assigned lessons.
+          Please sign in to view the rota and manage uniform.
         </p>
         <div className="mt-8">
           <button
