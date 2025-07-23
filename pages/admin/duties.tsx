@@ -4,7 +4,8 @@ import { Role, DutyRota, User, DutyStatus } from '@prisma/client';
 import useSWR, { useSWRConfig } from 'swr';
 import { useState, FormEvent, useEffect, useMemo, useCallback } from 'react';
 import { PrismaClient } from '@prisma/client';
-import FullCalendar, { EventClickArg } from '@fullcalendar/react';
+import FullCalendar from '@fullcalendar/react';
+import type { EventClickArg } from '@fullcalendar/core'; // Correct import for EventClickArg
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
 import interactionPlugin, { DateClickArg } from '@fullcalendar/interaction';
