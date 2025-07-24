@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "homepage": "./",
   "main": "main.js",
-
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +10,6 @@
     "lint": "next lint",
     "electron:dev": "electron .",
     "electron:build": "electron-builder"
-
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.18",
@@ -25,6 +23,7 @@
     "formidable": "^3.5.4",
     "next": "latest",
     "next-auth": "^4.24.11",
+    "next-pwa": "^5.6.0",
     "react": "latest",
     "react-big-calendar": "^1.19.4",
     "react-dom": "latest",
@@ -54,21 +53,18 @@
     "typescript": "5.8.3"
   },
   "build": {
-  "appId": "com.rafac.rotasystem",
-  "productName": "RAFAC Rota System",
-  "files": [
-    "main.js",
-    "preload.js"
-  ],
-  "win": {
-    "target": "nsis"
-  },
-  "nsis": {
-    "oneClick": false,
-    "allowToChangeInstallationDirectory": true
+    "appId": "com.rafac.rotasystem",
+    "productName": "RAFAC Rota System",
+    "files": [
+      "main.js",
+      "preload.js"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }
-
-
-}
-
