@@ -145,13 +145,76 @@ enum Role {
   USER
   ADMIN
 }
+// Add these new models to the end of your prisma/schema.prisma file.
+// Also, add the new relations to your existing User model.
+enum AssessmentType {
+  BASIC_RADIO_OPERATOR
+  // Add other assessment types here in the future
+}
+
+model Cadet {
+  id        Int      @id @default(autoincrement())
+  sqn       String
+  rank      String
+  fullName  String
+  
+  // Relation to assessments
+  assessments RadioAssessment[]
+}
+
+model AssessmentCohort {
+  id             Int      @id @default(autoincrement())
+  name           String
+  instructorName String
+  instructorSqn  String
+  assessorName   String
+  assessorSqn    String
+  createdAt      DateTime @default(now())
+  type           AssessmentType
+
+  // Relation to the assessments within this cohort
+  assessments RadioAssessment[]
+}
+
+model RadioAssessment {
+  id        Int      @id @default(autoincrement())
+  
+  cadetId   Int
+  cohortId  Int
+  cadet     Cadet    @relation(fields: [cadetId], references: [id], onDelete: Cascade)
+  cohort    AssessmentCohort @relation(fields: [cohortId], references: [id], onDelete: Cascade)
+
+  // Assessment Checklist Fields now use the new enum
+  firstClassLogbookCompleted    AssessmentStatus @default(PENDING)
+  basicCyberSecurityVideoWatched AssessmentStatus @default(PENDING)
+  correctUseOfBothFullCallsigns AssessmentStatus @default(PENDING)
+  authenticateRequested         AssessmentStatus @default(PENDING)
+  authenticateAnsweredCorrectly AssessmentStatus @default(PENDING)
+  radioCheckRequested           AssessmentStatus @default(PENDING)
+  radioCheckAnsweredCorrectly   AssessmentStatus @default(PENDING)
+  tacticalMessageFullyAnswered  AssessmentStatus @default(PENDING)
+  iSayAgainUsedCorrectly        AssessmentStatus @default(PENDING)
+  sayAgainUsed                  AssessmentStatus @default(PENDING)
+  prowordKnowledgeCompletedOK   AssessmentStatus @default(PENDING)
+  securityKnowledgeCompletedOK  AssessmentStatus @default(PENDING)
+  generalOperatingAndConfidence AssessmentStatus @default(PENDING)
+  
+  // The final pass/fail is still a boolean, calculated automatically
+  passFail                      Boolean @default(false)
+
+  @@unique([cadetId, cohortId])
+}
 
 enum DutyStatus {
   UNCONFIRMED
   ATTENDED
   ABSENT
 }
-
+enum AssessmentStatus {
+  PENDING
+  PASS
+  FAIL
+}
 
 // --- NextAuth.js Models ---
 // These are required by the @next-auth/prisma-adapter
