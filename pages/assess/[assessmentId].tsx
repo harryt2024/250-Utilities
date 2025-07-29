@@ -92,7 +92,7 @@ export default function AssessCadetPage() {
                     })}
                 </div>
                  <div className="mt-6">
-                    <Link href={`/admin/assessments/${assessment.cohortId}`} className="text-sm text-portal-blue hover:underline">
+                    <Link href={`/assessments/${assessment.cohortId}`} className="text-sm text-portal-blue hover:underline">
                         &larr; Back to Cohort Management
                     </Link>
                 </div>

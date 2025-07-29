@@ -8,7 +8,7 @@ const navLinks = [
   { name: 'My Duties', href: '/my-duties', icon: ClipboardCheck },
   { name: 'Uniform Store', href: '/uniform', icon: Shirt },
   { name: 'Submit Absence', href: '/absences', icon: UserX },
-    { name: 'Assessments', href: '/assessments', icon: FileText },
+  { name: 'Assessments', href: '/assessments', icon: FileText },
 ];
 
 export default function UserLayout({ children, pageTitle }: { children: ReactNode, pageTitle: string }) {
