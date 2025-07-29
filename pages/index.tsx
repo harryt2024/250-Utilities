@@ -37,6 +37,10 @@ export default function HomePage() {
             <h2 className="text-lg font-semibold text-gray-800">Welcome to the Rota System</h2>
             <p className="mt-1 text-gray-600">Use the navigation on the left to view your assigned lessons and the overall schedule.</p>
         </div>
+        <div className="p-6 bg-white rounded-lg shadow">
+            <h2 className="text-lg font-semibold text-gray-800">Privacy Information</h2>
+            <p className="mt-1 text-gray-600">By using our website, you agree to the terms of this Privacy Policy. The policy can be accessed <Link href="/privacy.pdf" className="font-semibold underline hover:text-blue-600">here</Link>.</p>
+        </div>
       </UserLayout>
     );
   }
